@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>اختبار الحاسوب الوطني</title>
+<style>
+:root{--p:#2563eb;--ok:#16a34a;--bad:#dc2626;--bg:#f1f5f9;--c:#fff;--t:#0f172a;--m:#64748b;--b:#e2e8f0}
+@media(prefers-color-scheme:dark){:root{--bg:#0f172a;--c:#1e293b;--t:#f1f5f9;--m:#94a3b8;--b:#334155}}
+*{box-sizing:border-box}body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var(--t);line-height:1.7}
+.w{max-width:860px;margin:0 auto;padding:16px}.card{background:var(--c);border:1px solid var(--b);border-radius:16px;padding:20px;margin-bottom:14px}
+h1{margin:0 0 6px;font-size:1.6rem}.m{color:var(--m)}
+button{font:inherit;cursor:pointer;border:1px solid var(--b);background:var(--c);color:var(--t);border-radius:10px;padding:9px 16px}
+button.p{background:var(--p);color:#fff;border-color:var(--p)}button:disabled{opacity:.5;cursor:not-allowed}
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
+.mode{text-align:center;padding:12px}.mode.on{border:2px solid var(--p);background:rgba(37,99,235,.1)}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:10px 0}
+input,select{font:inherit;padding:6px 10px;border:1px solid var(--b);border-radius:8px;background:var(--c);color:var(--t)}
+.bar{height:10px;background:var(--b);border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--p);transition:width .3s}
+.top{display:flex;justify-content:space-between;margin:8px 0;font-weight:bold}
+.q{font-size:1.2rem;font-weight:bold;margin:10px 0 14px}
+.opt{display:block;width:100%;text-align:start;margin:8px 0;padding:12px 14px}.opt:hover:not(:disabled){border-color:var(--p)}
+.opt.sel{border:2px solid var(--p);background:rgba(37,99,235,.12)}.opt.ok{border:2px solid var(--ok);background:rgba(22,163,74,.15)}.opt.no{border:2px solid var(--bad);background:rgba(220,38,38,.12)}
+.nav{display:flex;gap:6px;flex-wrap:wrap}.nav button{width:38px;height:38px;padding:0}.nav .a{background:var(--p);color:#fff}.nav .cur{outline:3px solid #f59e0b}
+.big{font-size:3rem;font-weight:bold;text-align:center}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.stats div{padding:10px;border-radius:12px;background:var(--bg)}.warn{background:rgba(245,158,11,.15);border:1px solid #f59e0b;border-radius:10px;padding:10px}
+.ri{border-inline-start:5px solid var(--b);padding-inline-start:12px;margin:14px 0}.ri.ok{border-color:var(--ok)}.ri.no{border-color:var(--bad)}.ri.na{border-color:#f59e0b}
+.hide{display:none}
+@media print{body{background:#fff;color:#000}.noprint,button{display:none!important}.card{border:0}}
+</style></head><body><div class="w" id="app"></div>
+<script>
+/* ===== أسئلة الملزمة =====
+ كل سؤال: {t:"الموضوع", q:"نص السؤال", o:["الخيارات"], a:رقم الإجابة الصحيحة (0=A)، أو null إذا غير محددة, e:"تفسير اختياري"}
+ أسئلة صح/خطأ: o:["True","False"] أو ["صح","خطأ"]. أضف أسئلتك في هذه المصفوفة. */
+const TITLE="اختبار الحاسوب الوطني";
+const QUESTIONS=[
+{t:"أساسيات الحاسوب",q:"______ lets you leave a screen or program.",o:["Boot","Programs","Exit","Text"],a:2},
+{t:"أساسيات الحاسوب",q:"Which of the following keys is used to delete characters to the left of the cursor?",o:["Alt + Delete","Shift","Esc","Delete","Backspace"],a:4},
+{t:"أساسيات الحاسوب",q:"______ menu type is also known as a drop down menu.",o:["Fly-down","Pop-down","Pop-up","Pull-up","Pull-down"],a:4},
+{t:"أساسيات الحاسوب",q:"To shrink a window to an icon, ______.",o:["open a group window","minimize a window","maximize a window","restore a window"],a:1},
+{t:"أساسيات الحاسوب",q:"A symbol or question on the screen that prompts you to take action and tell the computer what to do next, is ______.",o:["scanner","questionnaire","information seeker","prompt and dialog box","None of these"],a:3},
+{t:"أساسيات الحاسوب",q:"What is the default file extension for all Word documents?",o:["WRD","TXT","DOC","FIL","WD"],a:2},
+{t:"أساسيات الحاسوب",q:"Which of the following shortcut keys represents the correct sequence for copy, paste and cut commands?",o:["Ctrl + V ; Ctrl + C ; Ctrl + V","Ctrl + C ; Ctrl + V ; Ctrl + X","Ctrl + X ; Ctrl + C ; Ctrl + V","Ctrl + C ; Ctrl + X ; Ctrl + V"],a:1},
+{t:"أساسيات الحاسوب",q:"Help menu is available at which button?",o:["End","Start","Turn off","Restart"],a:1}
+];
+/* ===== المحرك ===== */
+const L="ABCDEFGH",$=id=>document.getElementById(id),app=$("app");
+const valid=QUESTIONS.map((x,i)=>({...x,id:i+1})).filter(x=>x.a!==null&&x.a!==undefined&&x.o&&x.o[x.a]!==undefined);
+const bad=QUESTIONS.map((x,i)=>({...x,id:i+1})).filter(x=>!valid.some(v=>v.id===x.id));
+const topics=[...new Set(valid.map(x=>x.t||"عام"))];
+const MODES={exam:"وضع الامتحان",practice:"وضع التدريب",random:"أسئلة عشوائية",custom:"اختبار محدد",review:"وضع المراجعة"};
+let S={mode:"exam",topic:"all",count:0,timer:0,shuffle:false};
+let Q=[],ans=[],cur=0,done=false,left=0,tick=null,locked=[];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function shuf(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function pool(){return S.topic==="all"?valid:valid.filter(x=>(x.t||"عام")===S.topic)}
+function home(){
+ clearInterval(tick);const n=pool().length;if(!S.count||S.count>n)S.count=n;
+ app.innerHTML=`<div class="card"><h1>${esc(TITLE)}</h1><div class="m">عدد الأسئلة المتاحة: <b>${valid.length}</b>${topics.length>1?" — المواضيع: "+topics.length:""}</div>
+ ${bad.length?`<div class="warn" style="margin-top:10px">⚠ ${bad.length} سؤال بلا إجابة صحيحة محددة وتم استبعادها: رقم ${bad.map(x=>x.id).join("، ")}</div>`:""}</div>
+ <div class="card"><b>اختر الوضع</b><div class="modes">${Object.entries(MODES).map(([k,v])=>`<button class="mode ${S.mode===k?"on":""}" data-m="${k}">${v}</button>`).join("")}</div>
+ <div class="row"><label>الموضوع: <select id="tp"><option value="all">كل المواضيع</option>${topics.map(t=>`<option ${S.topic===t?"selected":""}>${esc(t)}</option>`).join("")}</select></label>
+ <label>عدد الأسئلة: <input id="cn" type="number" min="1" max="${n}" value="${S.count}" style="width:90px"></label>
+ <label><input type="checkbox" id="sh" ${S.shuffle||S.mode==="random"?"checked":""}> ترتيب عشوائي</label>
+ <label class="${S.mode==="exam"||S.mode==="random"||S.mode==="custom"?"":"hide"}">المؤقت (دقائق، 0 = بدون): <input id="tm" type="number" min="0" value="${S.timer}" style="width:80px"></label></div>
+ <button class="p" id="go" ${n?"":"disabled"} style="width:100%;padding:14px;font-size:1.1rem">▶ ابدأ الاختبار</button>`;
+ app.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{read();S.mode=b.dataset.m;if(S.mode==="random")S.shuffle=true;home();if(S.mode==="custom")$("cn").focus()});
+ $("tp").onchange=()=>{read();S.count=0;home()};$("go").onclick=()=>{read();start()};
+}
+function read(){const c=$("cn"),t=$("tm"),s=$("sh"),tp=$("tp");if(tp)S.topic=tp.value;if(c)S.count=Math.max(1,parseInt(c.value)||1);if(t)S.timer=Math.max(0,parseInt(t.value)||0);if(s)S.shuffle=s.checked}
+function start(){
+ let p=pool();if(S.shuffle||S.mode==="random")p=shuf(p);
+ p=p.slice(0,Math.min(S.count||p.length,p.length));
+ Q=p.map(x=>{const idx=x.o.map((_,i)=>i),ord=(S.shuffle||S.mode==="random")?shuf(idx):idx;return{...x,o2:ord.map(i=>x.o[i]),a2:ord.indexOf(x.a)}});
+ ans=Q.map(()=>null);locked=Q.map(()=>false);cur=0;done=false;clearInterval(tick);
+ if(S.mode==="review"){result(true);return}
+ if(S.timer&&S.mode!=="practice"){left=S.timer*60;tick=setInterval(()=>{left--;const e=$("tmr");if(e)e.textContent=fmt(left);if(left<=0)finish()},1000)}
+ quiz();
+}
+const fmt=s=>String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+function quiz(){
+ const q=Q[cur],pr=S.mode==="practice",lk=pr&&locked[cur],ansd=ans.filter(x=>x!==null).length;
+ app.innerHTML=`<div class="card"><div class="top"><span>السؤال ${cur+1} من ${Q.length}</span><span>${MODES[S.mode]}</span>${left?`<span id="tmr">⏱ ${fmt(left)}</span>`:""}</div>
+ <div class="bar"><i style="width:${ansd/Q.length*100}%"></i></div></div>
+ <div class="card"><div class="q" dir="auto">${esc(q.q)}</div>
+ ${q.o2.map((o,i)=>{let c="";if(lk){c=i===q.a2?"ok":(ans[cur]===i?"no":"")}else if(ans[cur]===i)c="sel";
+  return `<button class="opt ${c}" data-i="${i}" ${lk?"disabled":""} dir="auto">${L[i]}. ${esc(o)}</button>`}).join("")}
+ ${lk?`<div class="m" style="margin-top:8px">${ans[cur]===q.a2?"✅ إجابة صحيحة":"❌ إجابة خاطئة — الصحيح: "+L[q.a2]+". "+esc(q.o2[q.a2])}${q.e?"<br>"+esc(q.e):""}</div>`:""}</div>
+ <div class="card"><div class="row"><button id="pv" ${cur?"":"disabled"}>◀ السابق</button><button id="nx" ${cur<Q.length-1?"":"disabled"}>التالي ▶</button><button class="p" id="fn" style="margin-inline-start:auto">إنهاء الاختبار</button></div>
+ <div class="nav">${Q.map((_,i)=>`<button data-g="${i}" class="${ans[i]!==null?"a":""} ${i===cur?"cur":""}">${i+1}</button>`).join("")}</div></div>`;
+ app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const i=+b.dataset.i;ans[cur]=ans[cur]===i&&!pr?null:i;if(pr)locked[cur]=true;quiz()});
+ app.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{cur=+b.dataset.g;quiz()});
+ $("pv").onclick=()=>{cur--;quiz()};$("nx").onclick=()=>{cur++;quiz()};
+ $("fn").onclick=()=>{const un=ans.filter(x=>x===null).length;if(!un||confirm(`لديك ${un} سؤال بلا إجابة. هل تريد إنهاء الاختبار؟`))finish()};
+}
+function finish(){if(done)return;done=true;clearInterval(tick);result(false)}
+function result(rv){
+ let ok=0,no=0,na=0;Q.forEach((q,i)=>{if(rv)return;if(ans[i]===null)na++;else if(ans[i]===q.a2)ok++;else no++});
+ const pc=Q.length?Math.round(ok/Q.length*10000)/100:0;
+ const msg=pc>=90?"🌟 ممتاز! أداء رائع، استمر!":pc>=75?"👏 جيد جداً، اقتربت من الإتقان.":pc>=60?"👍 جيد، راجع الأسئلة الخاطئة لتتحسن.":pc>=50?"🙂 مقبول، تحتاج إلى مزيد من المراجعة.":"💪 لا تيأس، راجع المادة وأعد المحاولة.";
+ app.innerHTML=`<div class="card">${rv?`<h1>وضع المراجعة</h1><div class="m">${Q.length} سؤال مع الإجابات الصحيحة</div>`:
+ `<h1 style="text-align:center">النتيجة النهائية</h1><div class="big">${pc}%</div><p style="text-align:center">${msg}</p>
+ <div class="stats"><div style="color:var(--ok)"><b>${ok}</b><br>صحيحة</div><div style="color:var(--bad)"><b>${no}</b><br>خاطئة</div><div style="color:#d97706"><b>${na}</b><br>بلا إجابة</div></div>
+ <p class="m" style="text-align:center">الدرجة: ${ok} من ${Q.length}</p>`}
+ <div class="row noprint" style="justify-content:center"><button class="p" id="rt">🔁 إعادة الاختبار</button><button id="nw">➕ اختبار جديد</button><button id="pt">🖨 طباعة</button></div></div>
+ <div class="card"><b>${rv?"الأسئلة":"مراجعة الأسئلة"}</b>${Q.map((q,i)=>{const a=ans[i],st=rv?"":a===null?"na":a===q.a2?"ok":"no";
+  return `<div class="ri ${st}"><div dir="auto"><b>${i+1}.</b> ${esc(q.q)}</div>${q.o2.map((o,j)=>`<div dir="auto" style="color:${j===q.a2?"var(--ok)":j===a?"var(--bad)":"inherit"}">${j===q.a2?"✔":j===a?"✘":"•"} ${L[j]}. ${esc(o)}${j===a&&!rv?" (إجابتك)":""}</div>`).join("")}
+  ${!rv&&a===null?'<div class="m">لم تُجب عن هذا السؤال</div>':""}${q.e?`<div class="m">${esc(q.e)}</div>`:""}</div>`}).join("")}</div>`;
+ $("rt").onclick=start;$("nw").onclick=home;$("pt").onclick=()=>window.print();
+}
+home();
+</script></body></html>
